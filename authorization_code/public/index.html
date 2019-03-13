@@ -2,10 +2,12 @@
 <html>
 
 <head>
-  <title>Example of the Authorization Code flow with Spotify</title>
+  <title>Example of the Authorization Code flow and playing with Spotify API</title>
   <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
   <script src="https://sdk.scdn.co/spotify-player.js"></script>
   <script src="spotify-web-api.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
+  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
   <style type="text/css">
     #login,
     #loggedin {
@@ -22,21 +24,17 @@
 </head>
 
 <body>
-  <div class="container">
+  <div class="container-fluid">
     <div id="login">
       <h1>This is an example of the Authorization Code flow</h1>
       <a href="/login" class="btn btn-primary">Log in with Spotify</a>
     </div>
     <div id="loggedin">
-      <div id="user-profile">
-      </div>
       <input type="text" placeholder="Søg efter sange" id="track-search-input">
-      <button class="btn btn-default" id="track-search">Go</button>
+      <button class="btn btn-success" id="track-search">Go</button>
       <div id="track-search-div">
       </div>
-      <div id="album-search" class="albums">
-      </div>
-      <div id="my-playlists">
+      <div id="user-profile">
       </div>
       <div id="oauth">
       </div>
@@ -83,40 +81,6 @@
           {{/each}}
         </script>
 
-  <script id="album-search-template" type="text/x-handlebars-template">
-    <h1>Search for albums {{artists.0.name}}</h1>
-        <div class="media">
-          <div class="pull-left">
-            <img class="media-object" width="150" src="{{images.0.url}}" />
-          </div>
-          <div class="media-body">
-            <dl class="dl-horizontal">
-              <dt>Display name</dt><dd class="clearfix">{{name}}</dd>
-              <dt>Total tracks</dt><dd>{{total_tracks}}</dd>
-              <dt>Spotify URI</dt><dd><a href="{{uri}}">{{uri}}</a></dd>
-            </dl>
-          </div>
-        </div>
-      </script>
-
-  <script id="my-playlists-template" type="text/x-handlebars-template">
-    <h1>My playlists</h1>
-      {{#each items}}
-        <div class="media">
-          <div class="pull-left">
-            <img class="media-object" width="150" src="{{images.0.url}}" />
-          </div>
-          <div class="media-body">
-            <dl class="dl-horizontal">
-              <dt>Playlist name</dt><dd class="clearfix">{{name}}</dd>
-              <dt>Total tracks</dt><dd>{{tracks.total}}</dd>
-              <dt>Spotify URI</dt><dd><a href="{{uri}}">{{uri}}</a></dd>
-            </dl>
-          </div>
-        </div>
-        {{/each}}
-      </script>
-
   <script id="oauth-template" type="text/x-handlebars-template">
     <h2>oAuth info</h2>
       <dl class="dl-horizontal">
@@ -125,8 +89,6 @@
       </dl>
     </script>
 
-  <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
-  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
   <script>
     let access_token, dev_id;
     (function () {
@@ -153,14 +115,6 @@
         trackSearchTemplate = Handlebars.compile(trackSearchSource),
         trackSearchPlaceholder = document.getElementById('track-search-div');
 
-      var albumSearchSource = document.getElementById('album-search-template').innerHTML,
-        albumSearchTemplate = Handlebars.compile(albumSearchSource),
-        albumSearchPlaceholder = document.getElementById('album-search');
-
-      var myPlaylistsSource = document.getElementById('my-playlists-template').innerHTML,
-        myPlaylistsTemplate = Handlebars.compile(myPlaylistsSource),
-        myPlaylistsPlaceholder = document.getElementById('my-playlists');
-
       var oauthSource = document.getElementById('oauth-template').innerHTML,
         oauthTemplate = Handlebars.compile(oauthSource),
         oauthPlaceholder = document.getElementById('oauth');
@@ -180,7 +134,7 @@
             access_token: access_token,
             refresh_token: refresh_token
           });
-
+          // Get account details
           $.ajax({
             url: 'https://api.spotify.com/v1/me',
             headers: {
@@ -190,8 +144,6 @@
               userProfilePlaceholder.innerHTML = userProfileTemplate(response);
 
               $('#login').hide();
-              $('#album-search').hide();
-              $('#my-playlists').hide();              
               $('#loggedin').show();
 
             }
@@ -200,8 +152,8 @@
           var spotifyApi = new SpotifyWebApi();
           spotifyApi.setAccessToken(access_token);
 
+          //init player
           window.onSpotifyWebPlaybackSDKReady = () => {
-            //init player
             const player = new Spotify.Player({
               name: 'Web Playback SDK Quick Start Player',
               getOAuthToken: cb => {
@@ -215,9 +167,6 @@
               console.log('Ready with Device ID', device_id);
               dev_id = device_id;
               //Set volume
-              player.setVolume(0.5).then(() => {
-                console.log('Volume updated!');
-              });
               player.connect().then(success => {
                 if (success) {
                   console.log('The Web Playback SDK successfully connected to Spotify!');
@@ -237,7 +186,7 @@
 
           // Play a specified track on the Web Playback SDK's device ID
           function play(device_id, track_id) {
-            console.log(track_id);
+            console.log("Playing: " + track_id);
             $.ajax({
               url: "https://api.spotify.com/v1/me/player/play?device_id=" + device_id,
               type: "PUT",
@@ -251,14 +200,6 @@
             });
           }
 
-          // get a list of devices
-          spotifyApi.getMyDevices(function (err, data) {
-            if (err) console.error(err);
-            else {
-              console.log('Devices ', data);
-            }
-          });
-
           //Klik på søgeknap
           document.getElementById('track-search').addEventListener('click', function () {
             // search tracks whose name, album or artist contains 'Love'
@@ -267,36 +208,14 @@
                 console.log('Search: ', data);
                 trackSearchPlaceholder.innerHTML = trackSearchTemplate(data.tracks);
                 for (item of data.tracks.items) {
-                  //console.log(item.id);
                   document.getElementById(item.id).addEventListener('click', function () {
                     //Play song;
-                    let uri = document.getElementById(item.id).getAttribute("val");
-                    play(dev_id, uri);
+                    play(dev_id, this.getAttribute("val"));
                   });
                 }
               }, function (err) {
                 console.error(err);
               })
-          });
-
-          // get Elvis' albums, passing a callback. When a callback is passed, no Promise is returned
-          spotifyApi.getArtistAlbums('43ZHCT0cAZBISjO8DG9PnE', function (err, data) {
-            if (err) console.error(err);
-            else {
-              //console.log('Artist albums', data);
-              albumSearchPlaceholder.innerHTML = albumSearchTemplate(data.items[0]);
-            }
-          });
-          //Get users playlists
-          $.ajax({
-            url: 'https://api.spotify.com/v1/me/playlists',
-            headers: {
-              'Authorization': 'Bearer ' + access_token
-            },
-            success: function (response) {
-              //console.log(response);
-              myPlaylistsPlaceholder.innerHTML = myPlaylistsTemplate(response);
-            }
           });
           //Login form
         } else {
