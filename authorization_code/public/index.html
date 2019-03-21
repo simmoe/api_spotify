@@ -6,11 +6,11 @@
 
   <!-- Compiled and minified CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-
   <script src="https://sdk.scdn.co/spotify-player.js"></script>
   <script src="spotify-web-api.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
   <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
   <style type="text/css">
     #login,
     #loggedin {
@@ -223,8 +223,8 @@
           document.getElementById('playlist-create').addEventListener('click', function () {
             console.log(user_id);
             spotifyApi.createPlaylist(user_id, {
-              'name' :  $('#playlist-create-input').val(),
-              'public': true,
+                'name': $('#playlist-create-input').val(),
+                'public': true,
               })
               .then(function (data) {
                 console.log('Created playlist!', data);
@@ -274,6 +274,15 @@
         }, false);
       }
     })();
+
+    //Socket portion
+
+    var socket;
+    socket = io.connect(':8888');
+    socket.on('search',
+      function (data) {
+
+      });
   </script>
   <!-- Compiled and minified JavaScript -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>

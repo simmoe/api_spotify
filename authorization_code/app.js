@@ -12,6 +12,7 @@ var request = require('request'); // "Request" library
 var cors = require('cors');
 var querystring = require('querystring');
 var cookieParser = require('cookie-parser');
+let access_token;
 
 var client_id = '49dca623dc3140cd9d14338de2ea5e49'; // Your client id
 var client_secret = '324980afe69e435baa878192d1f8d45a'; // Your secret
@@ -89,7 +90,7 @@ app.get('/callback', function(req, res) {
     request.post(authOptions, function(error, response, body) {
       if (!error && response.statusCode === 200) {
 
-        var access_token = body.access_token,
+            access_token = body.access_token,
             refresh_token = body.refresh_token;
 
         var options = {
@@ -144,4 +145,20 @@ app.get('/refresh_token', function(req, res) {
 });
 
 console.log('Listening on 8888');
-app.listen(8888);
+server = app.listen(8888);
+
+// WebSocket Portion
+var io = require('socket.io').listen(server);
+io.sockets.on('connection',
+  function (socket) {
+    console.log("We have a new client: " + socket.id);
+
+    socket.on('request_token', function(){
+      socket.emit('credentials',{token: access_token});
+    });
+
+    socket.on('disconnect', function() {
+      console.log("Client has disconnected");
+    });
+  }
+);

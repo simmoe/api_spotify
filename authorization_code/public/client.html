@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>Client UI</title>
+  <!-- Compiled and minified CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  <script src="https://sdk.scdn.co/spotify-player.js"></script>
+  <script src="spotify-web-api.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
+  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+
+  <style type="text/css">
+    #login,
+    #loggedin {
+      display: none;
+    }
+
+    .text-overflow {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: 500px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Klienter søger på sange her</h1>
+
+  <div class="row">
+    <input type="text" placeholder="Søg efter sange" id="track-search-input">
+    <button class="btn btn-success" id="track-search">Go</button>
+    <div id="track-search-div">
+    </div>
+  </div>
+
+
+  <script>
+    var socket, spotifyApi;
+    socket = io.connect(':8888');
+
+    socket.emit('request_token');
+
+    socket.on('credentials', function (data) {
+      console.log('Credentials: ', data);
+      //Authorized and ready to gogo
+      spotifyApi = new SpotifyWebApi();
+      spotifyApi.setAccessToken(data.token);
+    });
+
+
+    //Klik på søgeknap
+    document.getElementById('track-search').addEventListener('click', function () {
+      spotifyApi.searchTracks($('#track-search-input').val())
+        .then(function (data) {
+          console.log('Search: ', data);
+        }, function (err) {
+          console.error(err);
+        })
+    });
+
+</script>
+</body>
+
+</html>
