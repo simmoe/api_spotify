@@ -26,41 +26,93 @@
 </head>
 
 <body>
-  <h1>Klienter søger på sange her</h1>
+  <div class="container">
+    <h1>Klienter søger på sange her</h1>
 
-  <div class="row">
-    <input type="text" placeholder="Søg efter sange" id="track-search-input">
-    <button class="btn btn-success" id="track-search">Go</button>
-    <div id="track-search-div">
+    <div id="server-not-ready">
+      <div class="row">
+        <h3>Der er ikke oprettet en server</h3>
+        <p>Vent venligst, eller <a href="/">klik her for at oprette en server selv</a></p>
+      </div>
+    </div>
+
+    <div id="server-ready">
+      <div class="row">
+        <input type="text" placeholder="Søg efter sange" id="track-search-input">
+        <button class="btn btn-success" id="track-search">Go</button>
+        <div id="track-search-div">
+        </div>
+      </div>
     </div>
   </div>
 
+  <script id="track-search-template" type="text/x-handlebars-template">
+    <div class="row">
+        <h5 class="albumsearch_h1">Søgeresultat - tracks</h5>
+        {{#each items}}
+        <div class="col s12 m3">
+          <div class="card">
+            <div class="card-image">
+              <img src="{{album.images.0.url}}">
+              <span class="card-title">{{name}}<</span>
+            </div>
+            <div class="card-content">
+              <p>{{artists.0.name}}</p>
+            </div>
+            <div class="card-action">
+              <a href="#" id="{{id}}" val="{{uri}}">Add to playlist</a>
+            </div>
+          </div>
+        </div>
+        {{/each}}
+      </div>
+    </script>
+
 
   <script>
-    var socket, spotifyApi;
-    socket = io.connect(':8888');
-
-    socket.emit('request_token');
-
-    socket.on('credentials', function (data) {
-      console.log('Credentials: ', data);
-      //Authorized and ready to gogo
-      spotifyApi = new SpotifyWebApi();
-      spotifyApi.setAccessToken(data.token);
-    });
+    $(document).ready(function () {
+          $('#server-ready').hide();
+          var trackSearchSource = document.getElementById('track-search-template').innerHTML,
+            trackSearchTemplate = Handlebars.compile(trackSearchSource),
+            trackSearchPlaceholder = document.getElementById('track-search-div');
 
 
-    //Klik på søgeknap
-    document.getElementById('track-search').addEventListener('click', function () {
-      spotifyApi.searchTracks($('#track-search-input').val())
-        .then(function (data) {
-          console.log('Search: ', data);
-        }, function (err) {
-          console.error(err);
-        })
-    });
+          var socket, spotifyApi;
 
-</script>
+          socket = io.connect(':8888');
+
+          socket.emit('request_token');
+
+          socket.on('credentials', function (data) {
+            console.log('Credentials: ', data);
+            if (data.token) {
+              $('#server-not-ready').hide();
+              //Authorized and ready to gogo
+              spotifyApi = new SpotifyWebApi();
+              spotifyApi.setAccessToken(data.token);
+              $('#server-ready').show();
+            }
+          });
+
+
+          //Klik på søgeknap
+          document.getElementById('track-search').addEventListener('click', function () {
+            // search tracks whose name, album or artist contains 'Love'
+            spotifyApi.searchTracks($('#track-search-input').val())
+              .then(function (data) {
+                console.log('Search: ', data);
+                trackSearchPlaceholder.innerHTML = trackSearchTemplate(data.tracks);
+                for (item of data.tracks.items) {
+                  document.getElementById(item.id).addEventListener('click', function () {
+                    //Play song;
+                    play(dev_id, this.getAttribute("val"));
+                  });
+                }
+              }, function (err) {
+                console.error(err);
+              })
+          });
+        });
+  </script>
 </body>
-
 </html>

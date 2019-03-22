@@ -154,6 +154,7 @@ io.sockets.on('connection',
     console.log("We have a new client: " + socket.id);
 
     socket.on('request_token', function(){
+      console.log("Sending credentials");
       socket.emit('credentials',{token: access_token});
     });
 
