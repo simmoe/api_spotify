@@ -13,11 +13,15 @@ var cors = require('cors');
 var querystring = require('querystring');
 var cookieParser = require('cookie-parser');
 let access_token;
+let fs = require('fs');
+let obj = JSON.parse(fs.readFileSync('secrets.json', 'utf8'));
+console.log(obj);
 
-
-var client_id = '49dca623dc3140cd9d14338de2ea5e49'; // Your client id
-var client_secret = '324980afe69e435baa878192d1f8d45a'; // Your secret
+var client_id = obj["client-id"]; // Your client id
+var client_secret = obj["client-secret"]; // Your secret
 var redirect_uri = 'http://localhost:8888/callback'; // Your redirect uri
+
+
 
 /**
  * Generates a random string containing numbers and letters
